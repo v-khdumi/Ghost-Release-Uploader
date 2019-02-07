@@ -85,10 +85,20 @@ namespace GhostVersionFunctionApp
         }
 
         [FunctionName("Trigger_Prepare_Version")]
-        public static async Task<string> Run([ActivityTrigger]FunctionParams funcParams, TraceWriter log, ExecutionContext context)
+        public static async Task Run([ActivityTrigger]FunctionParams funcParams, TraceWriter log, ExecutionContext context)
         {
+            if (!funcParams.ReleaseName.StartsWith("2.", StringComparison.OrdinalIgnoreCase))
+            {
+                log.Info($"We don't need releases starting with anything other than 2.x. The provided release name is: {funcParams.ReleaseName}");
+                return;
+            }
+
+            log.Info("Started preparing version");
             var resourcesPath = context.FunctionAppDirectory;
             var repoPath = Path.GetFullPath(Path.Combine(resourcesPath, @"..\Target-" + DateTime.UtcNow.ToString("yyyyMMddTHHmmss")));
+
+            log.Info($"Repo path is: {repoPath}");
+
             try
             {
                 var co = new CloneOptions
@@ -101,34 +111,44 @@ namespace GhostVersionFunctionApp
                     var repoDir = new DirectoryInfo(repoPath);
                     repoDir.Empty(true);
 
+                    log.Info($"Started downloading ghost version: {funcParams.ReleaseUrl}");
                     await repoDir.DownloadGhostVersion(funcParams.ReleaseUrl);
+                    log.Info($"Finished downloading ghost version: {funcParams.ReleaseUrl}");
 
+                    log.Info($"Started enriching package.json");
                     repoDir.EnrichPackageJson();
+                    log.Info($"Finished enriching package.json");
 
+                    log.Info($"Started copying additional files into the release directory");
                     var azureResourcesDir = new DirectoryInfo(Path.Combine(resourcesPath, "AzureDeployment"));
                     azureResourcesDir.CopyFilesRecursively(repoDir);
+                    log.Info($"Finished copying additional files into the release directory");
 
                     Commands.Stage(repo, "*");
+                    log.Info($"All changes were staged.");
 
                     var author = new Signature(GitAuthorName, GitAuthorEmail, DateTime.Now);
                     var commit = repo.Commit($"Add v{funcParams.ReleaseName}", author, author);
+                    log.Info($"Commit {commit.Id} has been created.");
+
                     var options = new PushOptions
                     {
                         CredentialsProvider = Handler
                     };
+                    log.Info($"Pushing to remote.");
                     repo.Network.Push(repo.Branches[GitRepoBranch], options);
+                    log.Info($"Pushed to remote.");
 
+                    log.Info($"Creating release.");
                     await CreateRelease(funcParams.ReleaseName, funcParams.ReleaseNotes);
+                    log.Info($"Creating release.");
                 }
             }
             catch (Exception e)
             {
                 log.Error(e.Message);
                 log.Error(e.StackTrace);
-                return "failed: " + e.Message;
             }
-
-            return "finished";
         }
     }
 }
