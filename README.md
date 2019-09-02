@@ -1,5 +1,5 @@
 # Ghost-Release-Uploader
-An Azure Function that is triggered when new release of Ghost is out. The files of the new Ghost release will be downloaded and merged into the [RadoslavGatev/Ghost-Azure](https://github.com/RadoslavGatev/Ghost-Azure) repository. 
+An Azure Function that is triggered when new release of Ghost is out. The files of the release will be downloaded and merged into the [RadoslavGatev/Ghost-Azure](https://github.com/RadoslavGatev/Ghost-Azure) repository. 
 ## Installation
 1. Deploy to the Ghost-Release-Uploader an Azure Function App  
 2. Add the following Application Settings with their corresponding values  
