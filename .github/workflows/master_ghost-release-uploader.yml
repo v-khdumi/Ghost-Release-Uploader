@@ -41,4 +41,4 @@ jobs:
           app-name: 'Ghost-Release-Uploader'
           slot-name: 'Production'
           package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_034756288ECA4F98855DFF66A02DA6A7 }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_D846D91E748B4E8A954AFF17E829534E }}
